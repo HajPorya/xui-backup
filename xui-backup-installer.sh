@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# درخواست توکن تلگرام
+# درخواست توکن ربات تلگرام
 echo "🔐 لطفاً توکن ربات تلگرام را وارد کنید:"
 read -p "BOT_TOKEN: " BOT_TOKEN
 
@@ -8,9 +8,9 @@ read -p "BOT_TOKEN: " BOT_TOKEN
 echo "💬 لطفاً Chat ID مربوط به دریافت فایل بک‌آپ را وارد کنید:"
 read -p "CHAT_ID: " CHAT_ID
 
-# درخواست ساب‌دامنه یا آدرس
-echo "🌐 لطفاً ساب دامنه یا آدرس جدید سرور خود را وارد کنید (مثال: your-new-subdomain.example.com):"
-read -p "SUBDOMAIN: " SUBDOMAIN
+# درخواست دامنه یا آی‌پی
+echo "🌐 لطفاً دامنه یا آدرس آی‌پی سرور را وارد کنید:"
+read -p "SERVER_ADDRESS: " SERVER_ADDRESS
 
 # ساخت اسکریپت بک‌آپ
 cat <<EOF > /usr/local/bin/sendbackup.sh
@@ -19,7 +19,6 @@ NOW=\$(date "+%Y-%m-%d_%H-%M")
 BACKUP_PATH="/tmp/x-ui-backup-\$NOW.db"
 cp /etc/x-ui/x-ui.db "\$BACKUP_PATH"
 curl -s -F document=@"\$BACKUP_PATH" "https://api.telegram.org/bot$BOT_TOKEN/sendDocument?chat_id=$CHAT_ID&caption=Backup%20from%20x-ui%20(\$NOW)"
-curl -s "https://\$SUBDOMAIN/your-endpoint" # جایگزین کردن آدرس جدید برای API درخواست‌ها
 EOF
 
 # دسترسی اجرایی بده به اسکریپت
