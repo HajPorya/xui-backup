@@ -1,29 +1,22 @@
 #!/bin/bash
 
-echo "🔧 نصب اسکریپت بکاپ‌گیر X-UI آغاز شد..."
+# 📦 دریافت توکن ربات تلگرام
+read -p "🤖 لطفا Bot Token ربات تلگرام را وارد کنید: " BOT_TOKEN
 
-# دریافت اطلاعات از کاربر
-read -p "📬 توکن ربات تلگرام را وارد کنید: " TOKEN
-read -p "🆔 آیدی عددی چت را وارد کنید: " CHATID
+# 💬 دریافت Chat ID
+read -p "🆔 لطفا Chat ID را وارد کنید: " CHAT_ID
 
-# کلون کردن ریپو (اگر لازم بود)
-if [ ! -d "xui-backup" ]; then
-  git clone https://github.com/HajPorya/xui-backup.git
-fi
+# ⏬ دانلود فایل اصلی بک‌آپ
+curl -o /usr/local/bin/sendbackup.sh https://raw.githubusercontent.com/HajPorya/xui-backup/main/sendbackup.sh
+chmod +x /usr/local/bin/sendbackup.sh
 
-cd xui-backup || exit
+# 🧠 جایگزینی مقادیر در فایل
+sed -i "s|YOUR_TOKEN|$BOT_TOKEN|g" /usr/local/bin/sendbackup.sh
+sed -i "s|YOUR_CHATID|$CHAT_ID|g" /usr/local/bin/sendbackup.sh
 
-# جایگزینی TOKEN و CHATID در فایل sendbackup.sh
-sed -i "s/YOUR_TOKEN/$TOKEN/" sendbackup.sh
-sed -i "s/YOUR_CHATID/$CHATID/" sendbackup.sh
+# ⏱️ تنظیم کرون‌جاب هر ۳۰ دقیقه
+(crontab -l 2>/dev/null; echo "*/30 * * * * /usr/local/bin/sendbackup.sh") | crontab -
 
-# دادن دسترسی اجرا
-chmod +x sendbackup.sh
-
-# افزودن به کرون‌جاب برای اجرا هر ۳۰ دقیقه
-croncmd="$(pwd)/sendbackup.sh"
-(crontab -l 2>/dev/null; echo "*/30 * * * * $croncmd") | crontab -
-
-echo "✅ نصب تکمیل شد. اسکریپت هر ۳۰ دقیقه اجرا می‌شود."
-echo "📦 در حال ارسال اولین بک‌آپ تستی برای اطمینان..."
-/usr/local/bin/sendbackup.sh
+# 🧪 اجرای تست برای اطمینان
+echo -e "\n✅ نصب کامل شد. در حال ارسال تست بک‌آپ..."
+bash /usr/local/bin/sendbackup.sh
