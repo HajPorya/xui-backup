@@ -1,26 +1,31 @@
 #!/bin/bash
 
-# مسیر فایل اصلی بک‌آپ
-SOURCE="/etc/x-ui/x-ui.db"
-DEST="/root/x-ui.db"
+# -----------------------------------------------
+# 🛡️ Auto Backup Sender for X-UI Panel to Telegram
+# 📦 by HajPorya | https://github.com/HajPorya/xui-backup
+# -----------------------------------------------
 
-# توکن و آیدی ربات - به‌صورت متغیر (قبلاً ست شده با sed)
-TOKEN="YOUR_TOKEN"
-CHAT_ID="YOUR_CHATID"
+# 🔧 Configuration
+BOT_TOKEN="PASTE_YOUR_BOT_TOKEN_HERE"
+CHAT_ID="PASTE_YOUR_CHAT_ID_HERE"
 
-# بررسی وجود فایل و دسترسی
-if [ -f "$SOURCE" ]; then
-  cp "$SOURCE" "$DEST"
+# 📅 Generate timestamp
+NOW=$(date +"%Y-%m-%d_%H-%M")
 
-  if [ -f "$DEST" ]; then
-    curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendDocument" \
-      -F document=@"$DEST" \
-      -F chat_id="$CHAT_ID" \
-      -F caption="Backup from x-ui ($(date +%F_%H-%M))"
-  else
-    curl -s "https://api.telegram.org/bot$TOKEN/sendMessage?chat_id=$CHAT_ID&text=❌ کپی فایل بک‌آپ با خطا مواجه شد."
-  fi
+# 📁 Paths
+SOURCE_DB="/etc/x-ui/x-ui.db"
+BACKUP_FILE="/root/x-ui-backup-$NOW.db"
 
+# 🔄 Copy backup file
+cp "$SOURCE_DB" "$BACKUP_FILE"
+
+# ✅ If successful, send file to Telegram
+if [ $? -eq 0 ]; then
+    curl -s -F document=@"$BACKUP_FILE" \
+         -F caption="🛡️ *Backup from x-ui* (`$NOW`)" \
+         -F parse_mode=Markdown \
+         "https://api.telegram.org/bot$BOT_TOKEN/sendDocument?chat_id=$CHAT_ID"
 else
-  curl -s "https://api.telegram.org/bot$TOKEN/sendMessage?chat_id=$CHAT_ID&text=❌ فایل بک‌آپ x-ui پیدا نشد!"
+    echo "❌ Backup failed: could not copy file"
+    exit 1
 fi
