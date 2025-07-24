@@ -1,23 +1,46 @@
 #!/bin/bash
 
-# گرفتن ورودی بدون قاطی شدن
-echo "📬 لطفا Bot Token را وارد کنید:"
-read BOT_TOKEN
+# ----------------------------------------------
+# 📦 Installer for X-UI to Telegram Auto Backup
+# 🔧 by HajPorya | https://github.com/HajPorya/xui-backup
+# ----------------------------------------------
 
-echo "🆔 لطفا Chat ID را وارد کنید:"
-read CHAT_ID
+echo -e "\n📥 نصب اسکریپت ارسال بکاپ X-UI به تلگرام..."
 
-# دانلود و آماده‌سازی فایل بک‌آپ
-curl -o /usr/local/bin/sendbackup.sh https://raw.githubusercontent.com/HajPorya/xui-backup/main/sendbackup.sh
+# دریافت توکن و آیدی چت
+read -p "🤖 لطفا Bot Token را وارد کنید: " BOT_TOKEN
+read -p "🆔 لطفا Chat ID را وارد کنید: " CHAT_ID
+
+# ساخت فایل اسکریپت
+cat <<EOF > /usr/local/bin/sendbackup.sh
+#!/bin/bash
+
+BOT_TOKEN="$BOT_TOKEN"
+CHAT_ID="$CHAT_ID"
+NOW="\$(date +'%Y-%m-%d_%H-%M')"
+SOURCE_DB="/etc/x-ui/x-ui.db"
+BACKUP_FILE="/root/x-ui-backup-\${NOW}.db"
+
+cp "\$SOURCE_DB" "\$BACKUP_FILE"
+
+if [ \$? -eq 0 ]; then
+  curl -s -F document=@"\$BACKUP_FILE" \\
+       -F caption="🛡️ Backup from x-ui (\${NOW})" \\
+       -F parse_mode=Markdown \\
+       "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument?chat_id=\$CHAT_ID"
+else
+  echo "❌ Backup failed: could not copy file."
+  exit 1
+fi
+EOF
+
+# مجوز اجرا
 chmod +x /usr/local/bin/sendbackup.sh
 
-# جایگذاری توکن و چت‌آیدی در فایل بک‌آپ
-sed -i "s|YOUR_TOKEN|$BOT_TOKEN|g" /usr/local/bin/sendbackup.sh
-sed -i "s|YOUR_CHATID|$CHAT_ID|g" /usr/local/bin/sendbackup.sh
-
-# تنظیم کرون‌جاب برای اجرا هر ۳۰ دقیقه
-(crontab -l 2>/dev/null; echo "*/30 * * * * bash /usr/local/bin/sendbackup.sh") | crontab -
-
-# اجرای تست اولیه
-echo -e "\n✅ نصب کامل شد. در حال ارسال تست بک‌آپ..."
+# اجرای تست بکاپ
+echo -e "\n🧪 در حال ارسال اولین بکاپ تستی برای اطمینان..."
 bash /usr/local/bin/sendbackup.sh
+
+# پایان
+echo -e "\n✅ نصب کامل شد. بکاپ‌ها را از این پس می‌توانید با اجرای دستور زیر ارسال کنید:"
+echo "bash /usr/local/bin/sendbackup.sh"
