@@ -1,21 +1,26 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# مسیر فایل اصلی بک‌آپ
+SOURCE="/etc/x-ui/x-ui.db"
+DEST="/root/x-ui.db"
 
-NOW=$(date "+%Y-%m-%d_%H-%M")
-BACKUP_PATH="/tmp/x-ui-backup-$NOW.db"
+# توکن و آیدی ربات - به‌صورت متغیر (قبلاً ست شده با sed)
+TOKEN="YOUR_TOKEN"
+CHAT_ID="YOUR_CHATID"
 
-cp /etc/x-ui/x-ui.db "$BACKUP_PATH"
+# بررسی وجود فایل و دسترسی
+if [ -f "$SOURCE" ]; then
+  cp "$SOURCE" "$DEST"
 
-echo -e "${YELLOW}📦 در حال ارسال بک‌آپ به تلگرام ..."
+  if [ -f "$DEST" ]; then
+    curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendDocument" \
+      -F document=@"$DEST" \
+      -F chat_id="$CHAT_ID" \
+      -F caption="Backup from x-ui ($(date +%F_%H-%M))"
+  else
+    curl -s "https://api.telegram.org/bot$TOKEN/sendMessage?chat_id=$CHAT_ID&text=❌ کپی فایل بک‌آپ با خطا مواجه شد."
+  fi
 
-RESPONSE=$(curl -s -F document=@"$BACKUP_PATH" "https://api.telegram.org/botYOUR_TOKEN/sendDocument?chat_id=YOUR_CHATID&caption=📦 Backup from x-ui ($(hostname -I | awk '{print $1}') | $NOW)")
-
-if [[ "$RESPONSE" == *'"ok":true'* ]]; then
-  echo -e "${GREEN}✅ بک‌آپ با موفقیت ارسال شد.${NC}"
 else
-  echo -e "${YELLOW}⚠️ ارسال بک‌آپ با خطا مواجه شد."
-  echo "$RESPONSE"
+  curl -s "https://api.telegram.org/bot$TOKEN/sendMessage?chat_id=$CHAT_ID&text=❌ فایل بک‌آپ x-ui پیدا نشد!"
 fi
