@@ -1,46 +1,50 @@
 #!/bin/bash
 
-# ----------------------------------------------
-# 📦 Installer for X-UI to Telegram Auto Backup
-# 🔧 by HajPorya | https://github.com/HajPorya/xui-backup
-# ----------------------------------------------
+INSTALL_DIR="/usr/local/bin"
+SCRIPT_NAME="sendbackup.sh"
+SCRIPT_PATH="$INSTALL_DIR/$SCRIPT_NAME"
+REPO_URL="https://raw.githubusercontent.com/HajPorya/xui-backup/main/$SCRIPT_NAME"
 
-echo -e "\n📥 نصب اسکریپت ارسال بکاپ X-UI به تلگرام..."
+function install_script() {
+  echo "✅ در حال نصب اسکریپت بکاپ..."
+  
+  read -p "🟡 لطفا Bot Token را وارد کنید: " BOT_TOKEN
+  read -p "🟡 لطفا Chat ID را وارد کنید: " CHAT_ID
 
-# دریافت توکن و آیدی چت
-read -p "🤖 لطفا Bot Token را وارد کنید: " BOT_TOKEN
-read -p "🆔 لطفا Chat ID را وارد کنید: " CHAT_ID
-
-# ساخت فایل اسکریپت
-cat <<EOF > /usr/local/bin/sendbackup.sh
+  cat > "$SCRIPT_PATH" <<EOF
 #!/bin/bash
-
 BOT_TOKEN="$BOT_TOKEN"
 CHAT_ID="$CHAT_ID"
-NOW="\$(date +'%Y-%m-%d_%H-%M')"
+NOW=\$(date +"%Y-%m-%d_%H-%M")
 SOURCE_DB="/etc/x-ui/x-ui.db"
 BACKUP_FILE="/root/x-ui-backup-\${NOW}.db"
 
-cp "\$SOURCE_DB" "\$BACKUP_FILE"
-
-if [ \$? -eq 0 ]; then
-  curl -s -F document=@"\$BACKUP_FILE" \\
-       -F caption="🛡️ Backup from x-ui (\${NOW})" \\
-       -F parse_mode=Markdown \\
-       "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument?chat_id=\$CHAT_ID"
+if [ -f "\$SOURCE_DB" ]; then
+  cp "\$SOURCE_DB" "\$BACKUP_FILE"
+  MESSAGE="X-UI Backup: \$NOW"
+  curl -s -F document=@"\$BACKUP_FILE" -F caption="\$MESSAGE" "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument?chat_id=\$CHAT_ID"
 else
-  echo "❌ Backup failed: could not copy file."
+  echo "❌ فایل دیتابیس پیدا نشد"
   exit 1
 fi
 EOF
 
-# مجوز اجرا
-chmod +x /usr/local/bin/sendbackup.sh
+  chmod +x "$SCRIPT_PATH"
+  echo "✅ نصب کامل شد. می‌توانید با اجرای دستور زیر تست کنید:"
+  echo "bash $SCRIPT_PATH"
+}
 
-# اجرای تست بکاپ
-echo -e "\n🧪 در حال ارسال اولین بکاپ تستی برای اطمینان..."
-bash /usr/local/bin/sendbackup.sh
+function update_script() {
+  echo "🔄 در حال آپدیت اسکریپت از GitHub..."
+  curl -s -o "$SCRIPT_PATH" "$REPO_URL"
+  chmod +x "$SCRIPT_PATH"
+  echo "✅ آپدیت انجام شد."
+}
 
-# پایان
-echo -e "\n✅ نصب کامل شد. بکاپ‌ها را از این پس می‌توانید با اجرای دستور زیر ارسال کنید:"
-echo "bash /usr/local/bin/sendbackup.sh"
+# اگر دستور update اجرا شد فقط آپدیت کند
+if [[ "$1" == "update" ]]; then
+  update_script
+  exit 0
+fi
+
+install_script
